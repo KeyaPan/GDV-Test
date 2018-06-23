@@ -1,0 +1,244 @@
+<html>
+	<head>
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="three.js"></script>
+		<script src="orbit.js"></script>
+		<script>
+			var scene = new THREE.Scene();
+			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+			var controls = new THREE.OrbitControls( camera );
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			document.body.appendChild( renderer.domElement );
+			
+			
+//__________GEOMETRIEN__________________________________________________________________________________________
+			var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+			var geometryp = new THREE.PlaneGeometry( 200,200, 128, 128 );
+			var geometryb = new THREE.BoxGeometry( 1, 2, 1 );
+			var geometryk = new THREE.Geometry();
+			
+//____________MATERIALIEN_______________________________________________________________________________________
+			var material = new THREE.MeshPhongMaterial( { color: 0xffffff } );
+			var materialp = new THREE.MeshPhongMaterial( {color: 0xA8A8A8, side: THREE.DoubleSide} );			
+			var materialb = new THREE.MeshPhongMaterial( { color: 0x8b4513 } );
+			var materiala = new THREE.MeshPhongMaterial( { color: 0x00ff00 } );
+			var materialk = new THREE.MeshLambertMaterial( {color: 0x00ff00, side: THREE.DoubleSide} );
+//___________OBJEKTE________________________________________________________________________			
+			var plane = new THREE.Mesh( geometryp, materialp );
+			var cube = new THREE.Mesh( geometry, material );
+			var cube2 = new THREE.Mesh( geometry, material );
+			
+			plane.rotation.x = Math.PI / 2;
+			plane.position.y = -2;
+			plane.receiveShadow = true;
+			
+			cube.position.z = 13;
+			cube.castShadow = true;
+			
+			cube2.position.z = 7;
+			cube2.castShadow = true;
+			
+//_________ BAUM_________________________________________________________________________			
+			var baum = new THREE.Object3D(); //Gruppen
+			var krone1 = new THREE.Object3D ();
+			var krone2 = new THREE.Object3D ();
+			var krone3 = new THREE.Object3D ();
+			
+			var stamm = new THREE.Mesh( geometryb, materialb ); //Objekte
+			stamm.castShadow = true;
+			var ast1 = new THREE.Mesh (geometryb, materiala);
+			ast1.castShadow = true;
+			ast1.position.y = 1;
+			
+			var ast2 = new THREE.Mesh (geometryb,materiala);
+			ast2.castShadow = true;
+			ast2.position.y = 1;
+			
+			var ast3 = new THREE.Mesh (geometryb,materiala);
+			ast3.castShadow = true;
+			ast3.position.y = 1;
+			
+			stamm.position.y = -1;
+			baum.add (stamm);
+			
+			krone1.rotation.z = Math.PI / 3;
+			krone1.add(ast1);
+			
+			krone2.rotation.z = Math.PI / 3;
+			krone2.rotation.y = 2.094; 
+			krone2.add(ast2);	
+			
+			krone3.rotation.z = Math.PI / 3;
+			krone3.rotation.y = -2.094; 
+			krone3.add(ast3);	
+
+			baum.add(krone1);
+			baum.add(krone2);
+			baum.add(krone3);	
+			
+			baum.position.x = 0;
+			baum.position.z = -3;
+			
+//_________KOCHKURVE_______________________________________________________________________
+
+			var turtle = new THREE.Object3D();
+			turtle.matrixAutoUpdate = false;
+			console.log( turtle.matrix.clone() );
+			
+			var groupk = new THREE.Object3D ();
+			var l = 10;
+			var rek = 4;
+			var f =0;
+			
+			function drehen(winkel)
+			{
+				turtle.matrix.multiply( new THREE.Matrix4().makeRotationZ(winkel) );
+			};
+			
+			function bewegen(l)
+			{
+				var a = new THREE.Vector3(turtle.matrix.elements[12],
+				turtle.matrix.elements[13], turtle.matrix.elements[14]);
+				
+				var c = new THREE.Vector3(turtle.matrix.elements[12],
+				turtle.matrix.elements[13], turtle.matrix.elements[14] +1 );
+				
+				turtle.matrix.multiply(new THREE.Matrix4().makeTranslation( l, 0 ,0) );
+				
+				var b = new THREE.Vector3(turtle.matrix.elements[12],
+				turtle.matrix.elements[13], turtle.matrix.elements[14]);
+				
+				
+				var d = new THREE.Vector3(turtle.matrix.elements[12],
+				turtle.matrix.elements[13], turtle.matrix.elements[14] +1 );
+				
+				geometryk.vertices.push( a );
+				geometryk.vertices.push( c );
+				geometryk.vertices.push( b );
+				geometryk.vertices.push( d );
+				
+				var face = new THREE.Face3( f, f+1, f+3);
+				var face2 = new THREE.Face3( f, f+3, f+2);
+				
+				geometryk.faces.push( face );
+				geometryk.faces.push( face2 );
+				f +=4;
+			//________FLATSHADER____________________________________
+				var ab1 = new THREE.Vector3;
+				var ac1 = new THREE.Vector3;
+				var kreuzprodukt1 = new THREE.Vector3;
+				ab1.subVectors(geometryk.vertices[0], geometryk.vertices[1]);
+				ac1.subVectors(geometryk.vertices[1], geometryk.vertices[3]);
+				kreuzprodukt1= kreuzprodukt1.crossVectors(ab1, ac1);
+				kreuzprodukt1.normalize();
+				
+				var ab2 = new THREE.Vector3;
+				var ac2 = new THREE.Vector3;
+				var kreuzprodukt2 = new THREE.Vector3;
+				ab2.subVectors(geometryk.vertices[0], geometryk.vertices[3]);
+				ac2.subVectors(geometryk.vertices[3], geometryk.vertices[2]);
+				kreuzprodukt2= kreuzprodukt2.crossVectors(ab2, ac2);
+				kreuzprodukt2.normalize();
+				
+				var band1 = new THREE.Mesh( geometryk, materialk ); 
+				band1.castShadow = true;
+				
+				var band2= new THREE.Mesh( geometryk, materialk ); 	
+				band2.castShadow = true;				
+				
+				face.normal= kreuzprodukt2;
+				face2.normal = kreuzprodukt2;
+				
+			//_______GOURADSHADER_____________________________________
+			
+			// geometry.vertices[geometry.faces[i].a];
+				
+				groupk.add( band1 );
+				groupk.add( band2 );
+			};
+			
+			function kochKurve (l, rek) {
+				if(rek == 0)
+					bewegen(l);
+				else 
+				{
+					kochKurve (l / 3, rek - 1) ;
+					drehen( Math.PI/3 );
+					kochKurve (l / 3, rek - 1) ;
+					drehen( -2*Math.PI/3 );
+					kochKurve (l / 3, rek - 1) ;
+					drehen( Math.PI/3 );
+					kochKurve (l / 3, rek - 1) ;
+				}
+			}
+			
+			kochKurve(l, rek);
+			
+			groupk.rotation.y = Math.PI/2;
+			groupk.position. x = -5;
+			groupk.position.z = 15;
+			
+			
+			
+//______ LICHT_____________________________________________________________________
+			
+			var light = new THREE.PointLight( 0x551a8b, 1, 50 );
+			light.position.set( 0, 2, 10 );
+			light.castShadow = true;
+			
+			var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			
+			var spotLight = new THREE.SpotLight( 0x00ff00, 0.5 );
+			spotLight.position.set( 0, 0, 1 );
+
+			spotLight.shadow.mapSize.width = 5;
+			spotLight.shadow.mapSize.height = 5;
+
+	
+//___________ ZU  SCENE HINZUFÜGEN______________________________________________________
+			scene.add( spotLight );
+			scene.add( directionalLight );
+			scene.add( light );
+			scene.add( plane );
+			scene.add( cube );
+			scene.add( cube2 );
+			scene.add( baum ); 
+			scene.add (groupk);
+
+			camera.position.z = 5;
+			camera.position.y = 5;
+			
+			geometryk.computeFaceNormals();
+			
+			
+//__________ANIMIEREN_____________________________________________________________________
+			var animate = function () {
+				requestAnimationFrame( animate );
+
+				cube.rotation.x += 0;
+				cube.rotation.y += 0.01;
+				
+				cube2.rotation.x += 0;
+				cube2.rotation.y += 0.01;
+				
+				baum.rotation.x += 0;
+				baum.rotation.y += 0.01;
+				
+				controls.update();
+				renderer.render(scene, camera);
+			};
+
+			animate();
+		</script>
+	</body>
+</html>
